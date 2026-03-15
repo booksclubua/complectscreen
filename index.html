@@ -1,114 +1,466 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Экран комплектовщика</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 1em; background: #eef2f7; }
-    h1 { font-size: 2em; text-align: center; margin-bottom: 1em; color: #2c3e50; }
-    .order { background: #fff; border-radius: 15px; padding: 1em; margin-bottom: 1.5em; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em; font-size: 1.2em; color: #34495e; }
-    .order-id { font-weight: bold; font-size: 1.3em; color: #2980b9; }
-    .btn { padding: 1em; font-size: 1.1em; margin: 0.5em 0.25em; border: none; border-radius: 10px; cursor: pointer; width: 48%; }
-    .btn-print { background: #f39c12; color: #fff; }
-    .btn-packaged { background: #27ae60; color: #fff; }
-    .btn-row { display: flex; justify-content: space-between; }
-    .items { display: flex; flex-wrap: wrap; gap: 1em; justify-content: center; }
-    .item { background: #ecf0f1; border-radius: 10px; padding: 0.5em; width: 45%; text-align: center; transition: background 0.3s; }
-    .item.correct { background: #d4edda; }
-    .item.error { background: #f8d7da; }
-    .item img { max-width: 100px; max-height: 100px; margin-bottom: 0.5em; border-radius: 8px; }
-    .barcode-input { width: 100%; font-size: 1.5em; padding: 0.5em; margin: 1em 0; border-radius: 10px; border: 2px solid #ccc; box-sizing: border-box; }
-  </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Task CRM</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f4f7;
+margin:0;
+padding:20px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+flex-wrap:wrap;
+gap:10px;
+margin-bottom:20px;
+}
+
+button{
+border:none;
+padding:10px 14px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.add{background:#4CAF50;color:white}
+.send{background:#2196F3;color:white}
+.settings{background:#555;color:white}
+
+.task-card{
+background:white;
+padding:15px;
+margin-bottom:10px;
+border-radius:10px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.task-title{
+font-weight:bold;
+font-size:16px;
+}
+
+.task-actions{
+margin-top:10px;
+}
+
+.edit{background:#FFC107}
+.delete{background:#f44336;color:white}
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal-content{
+background:white;
+padding:20px;
+border-radius:10px;
+width:90%;
+max-width:400px;
+}
+
+label{
+display:block;
+margin-top:10px;
+font-weight:bold;
+}
+
+input,select{
+width:100%;
+padding:8px;
+margin-top:5px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+.option-item{
+display:flex;
+justify-content:space-between;
+margin-top:5px;
+}
+
+.option-item button{
+background:#f44336;
+color:white;
+padding:3px 8px;
+}
+
+</style>
+
 </head>
+
 <body>
-  <h1>📦 Экран комплектовщика</h1>
-  <input type="text" id="barcode" class="barcode-input" placeholder="Сканируйте штрихкод" autofocus>
-  <div id="orders"></div>
 
-  <script>
-    let orders = [];
+<div class="header">
 
-    async function fetchOrders() {
-      try {
-        const response = await fetch('/api/orders');
-        orders = await response.json();
-        renderOrders();
-      } catch (error) {
-        console.error('Ошибка загрузки заказов:', error);
-      }
-    }
+<h2>📋 Task CRM</h2>
 
-    const ordersDiv = document.getElementById('orders');
+<div>
 
-    function renderOrders() {
-      ordersDiv.innerHTML = '';
-      orders.forEach(order => {
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <div class="order-header">
-            <span class="order-id">Заказ #${order.id}</span>
-            <span>ТТН: ${order.ttn}</span>
-          </div>
-          <div class="items"></div>
-          <div class="btn-row">
-            <button class="btn btn-print">🖨️ Печать ТТН</button>
-            <button class="btn btn-packaged">✅ Упаковано</button>
-          </div>
-        `;
+<button class="add" onclick="openModal()">+ Задача</button>
+<button class="send" onclick="sendTasks()">Назначить</button>
+<button class="settings" onclick="openSettings()">⚙️</button>
 
-        const itemsDiv = div.querySelector('.items');
-        order.items.forEach(item => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'item';
-          itemDiv.innerHTML = `
-            <img src="${item.img}" alt="${item.name}">
-            <div><strong>${item.name}</strong></div>
-            <div>${item.scanned}/${item.qty}</div>
-          `;
-          itemsDiv.append(itemDiv);
-        });
+</div>
 
-        div.querySelector('.btn-print').onclick = () => {
-          fetch(`/api/orders/${order.id}/print-ttn`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-              if (data.pdfUrl) window.open(data.pdfUrl, '_blank');
-              else alert('Ошибка при печати ТТН');
-            });
-        };
+</div>
 
-        div.querySelector('.btn-packaged').onclick = () => {
-          fetch(`/api/orders/${order.id}/complete`, { method: 'POST' })
-            .then(() => fetchOrders());
-        };
+<div id="taskList"></div>
 
-        ordersDiv.append(div);
-      });
-    }
+<!-- МОДАЛКА ЗАДАЧ -->
 
-    document.getElementById('barcode').addEventListener('change', e => {
-      const code = e.target.value.trim();
-      let found = false;
-      for (const order of orders) {
-        for (const item of order.items) {
-          if (item.sku === code) {
-            if (item.scanned < item.qty) {
-              item.scanned++;
-              found = true;
-              break;
-            }
-          }
-        }
-      }
-      if (!found) alert('❌ Товар не найден или уже собран.');
-      renderOrders();
-      e.target.value = '';
-    });
+<div class="modal" id="taskModal">
+<div class="modal-content">
 
-    fetchOrders();
-  </script>
+<h3 id="modalTitle">Новая задача</h3>
+
+<label>Название задачи</label>
+<select id="taskName"></select>
+
+<label>Детали задачи</label>
+<select id="taskDetail"></select>
+
+<label>Ожидаемый срок выполнения</label>
+<input type="date" id="taskDate">
+
+<br><br>
+
+<button onclick="saveTask()">Сохранить</button>
+<button onclick="closeModal()">Отмена</button>
+
+</div>
+</div>
+
+<!-- ПАНЕЛЬ НАСТРОЕК -->
+
+<div class="modal" id="settingsModal">
+<div class="modal-content">
+
+<h3>⚙️ Настройки</h3>
+
+<label>Добавить вариант задачи</label>
+
+<input id="newTaskOption">
+<button onclick="addTaskOption()">Добавить</button>
+
+<div id="taskOptionsList"></div>
+
+<hr>
+
+<label>Добавить вариант деталей</label>
+
+<input id="newDetailOption">
+<button onclick="addDetailOption()">Добавить</button>
+
+<div id="detailOptionsList"></div>
+
+<br>
+
+<button onclick="closeSettings()">Закрыть</button>
+
+</div>
+</div>
+
+<script>
+
+const BOT_TOKEN="8720661501:AAGqyVGWsJQaQ1UFyEgdAI8BZ3TibtM04J4";
+const CHAT_ID="-5230019765";
+
+let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
+let taskOptions=JSON.parse(localStorage.getItem("taskOptions"))||[];
+let detailOptions=JSON.parse(localStorage.getItem("detailOptions"))||[];
+
+let editIndex=null;
+
+render();
+renderOptions();
+
+function openModal(index=null){
+
+taskModal.style.display="flex";
+
+if(index!==null){
+
+editIndex=index;
+
+let t=tasks[index];
+
+taskName.value=t.name;
+taskDetail.value=t.detail;
+taskDate.value=t.date;
+
+}else{
+
+editIndex=null;
+
+taskDate.value="";
+
+}
+
+}
+
+function closeModal(){
+
+taskModal.style.display="none";
+
+}
+
+function saveTask(){
+
+let task={
+name:taskName.value,
+detail:taskDetail.value,
+date:taskDate.value
+};
+
+if(!task.name) return;
+
+if(editIndex!==null){
+
+tasks[editIndex]=task;
+
+}else{
+
+tasks.push(task);
+
+}
+
+localStorage.setItem("tasks",JSON.stringify(tasks));
+
+render();
+
+closeModal();
+
+}
+
+function deleteTask(i){
+
+if(confirm("Удалить задачу?")){
+
+tasks.splice(i,1);
+
+localStorage.setItem("tasks",JSON.stringify(tasks));
+
+render();
+
+}
+
+}
+
+function render(){
+
+taskList.innerHTML="";
+
+tasks.forEach((t,i)=>{
+
+let div=document.createElement("div");
+
+div.className="task-card";
+
+div.innerHTML=`
+
+<div class="task-title">${t.name}</div>
+
+<div>${t.detail||""}</div>
+
+<div>📅 ${t.date||"без срока"}</div>
+
+<div class="task-actions">
+
+<button class="edit" onclick="openModal(${i})">✏️</button>
+<button class="delete" onclick="deleteTask(${i})">🗑</button>
+
+</div>
+
+`;
+
+taskList.appendChild(div);
+
+});
+
+}
+
+function renderOptions(){
+
+taskName.innerHTML="";
+taskDetail.innerHTML="";
+
+taskOptions.forEach(o=>{
+
+let option=document.createElement("option");
+option.value=o;
+option.textContent=o;
+
+taskName.appendChild(option);
+
+});
+
+detailOptions.forEach(o=>{
+
+let option=document.createElement("option");
+option.value=o;
+option.textContent=o;
+
+taskDetail.appendChild(option);
+
+});
+
+renderSettingsLists();
+
+}
+
+function openSettings(){
+
+settingsModal.style.display="flex";
+
+}
+
+function closeSettings(){
+
+settingsModal.style.display="none";
+
+}
+
+function addTaskOption(){
+
+let v=newTaskOption.value;
+
+if(!v) return;
+
+taskOptions.push(v);
+
+localStorage.setItem("taskOptions",JSON.stringify(taskOptions));
+
+newTaskOption.value="";
+
+renderOptions();
+
+}
+
+function addDetailOption(){
+
+let v=newDetailOption.value;
+
+if(!v) return;
+
+detailOptions.push(v);
+
+localStorage.setItem("detailOptions",JSON.stringify(detailOptions));
+
+newDetailOption.value="";
+
+renderOptions();
+
+}
+
+function renderSettingsLists(){
+
+taskOptionsList.innerHTML="";
+
+taskOptions.forEach((o,i)=>{
+
+let div=document.createElement("div");
+
+div.className="option-item";
+
+div.innerHTML=`
+<span>${o}</span>
+<button onclick="removeTaskOption(${i})">X</button>
+`;
+
+taskOptionsList.appendChild(div);
+
+});
+
+detailOptionsList.innerHTML="";
+
+detailOptions.forEach((o,i)=>{
+
+let div=document.createElement("div");
+
+div.className="option-item";
+
+div.innerHTML=`
+<span>${o}</span>
+<button onclick="removeDetailOption(${i})">X</button>
+`;
+
+detailOptionsList.appendChild(div);
+
+});
+
+}
+
+function removeTaskOption(i){
+
+taskOptions.splice(i,1);
+
+localStorage.setItem("taskOptions",JSON.stringify(taskOptions));
+
+renderOptions();
+
+}
+
+function removeDetailOption(i){
+
+detailOptions.splice(i,1);
+
+localStorage.setItem("detailOptions",JSON.stringify(detailOptions));
+
+renderOptions();
+
+}
+
+async function sendTasks(){
+
+for(let task of tasks){
+
+let text=`📌 Задача
+${task.name}
+
+Детали: ${task.detail||"-"}
+Срок: ${task.date||"не указан"}`;
+
+await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+chat_id:CHAT_ID,
+text:text
+
+})
+
+});
+
+}
+
+alert("Задачи отправлены");
+
+}
+
+</script>
+
 </body>
 </html>
