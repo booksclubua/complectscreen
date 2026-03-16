@@ -7,32 +7,65 @@
 
 <title>Task CRM</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
 body{
 font-family:Arial;
-background:#f2f4f7;
 margin:0;
-padding:20px;
+background:#f3f3f3;
 }
 
-.hidden{
+/* LOGIN */
+
+#loginScreen{
+text-align:center;
+margin-top:60px;
+}
+
+#passwordInput{
+font-size:28px;
+text-align:center;
+width:200px;
+padding:10px;
+margin:20px auto;
+display:block;
+}
+
+.keyboard{
+display:grid;
+grid-template-columns:repeat(3,80px);
+gap:10px;
+justify-content:center;
+}
+
+.keyboard button{
+font-size:22px;
+padding:15px;
+border:none;
+border-radius:10px;
+background:#2196F3;
+color:white;
+}
+
+/* APP */
+
+#app{
 display:none;
+padding:15px;
 }
 
 .header{
 display:flex;
 justify-content:space-between;
-margin-bottom:20px;
+margin-bottom:15px;
 }
 
 button{
-padding:10px 14px;
+padding:10px;
 border:none;
 border-radius:6px;
-cursor:pointer;
 }
 
 .add{background:#4CAF50;color:white}
@@ -42,10 +75,12 @@ cursor:pointer;
 .card{
 background:white;
 padding:15px;
-border-radius:10px;
 margin-bottom:10px;
+border-radius:10px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
+
+/* MODALS */
 
 .modal{
 position:fixed;
@@ -70,7 +105,7 @@ max-width:400px;
 input,select,textarea{
 width:100%;
 padding:8px;
-margin-top:5px;
+margin-top:6px;
 margin-bottom:10px;
 }
 
@@ -82,28 +117,46 @@ margin-bottom:10px;
 
 <!-- LOGIN -->
 
-<div id="login">
+<div id="loginScreen">
 
 <h2>Введите пароль</h2>
 
-<input type="password" id="password">
+<input id="passwordInput" readonly>
 
-<button onclick="login()">Войти</button>
+<div class="keyboard">
+
+<button onclick="pressKey('1')">1</button>
+<button onclick="pressKey('2')">2</button>
+<button onclick="pressKey('3')">3</button>
+
+<button onclick="pressKey('4')">4</button>
+<button onclick="pressKey('5')">5</button>
+<button onclick="pressKey('6')">6</button>
+
+<button onclick="pressKey('7')">7</button>
+<button onclick="pressKey('8')">8</button>
+<button onclick="pressKey('9')">9</button>
+
+<button onclick="deleteKey()">←</button>
+<button onclick="pressKey('0')">0</button>
+<button onclick="submitPassword()">✓</button>
+
+</div>
 
 </div>
 
 <!-- APP -->
 
-<div id="app" class="hidden">
+<div id="app">
 
 <div class="header">
 
-<h2>Task CRM</h2>
+<h3>Task CRM</h3>
 
 <div>
 
-<button class="add" onclick="openTask()">+ задача</button>
-<button class="send" onclick="sendTasks()">Назначить</button>
+<button class="add" onclick="openTask()">+</button>
+<button class="send" onclick="sendTasks()">→</button>
 <button class="settings" onclick="openSettings()">⚙</button>
 
 </div>
@@ -125,7 +178,7 @@ margin-bottom:10px;
 <label>Название</label>
 <select id="taskName"></select>
 
-<label>Дополнительный текст</label>
+<label>Доп. текст</label>
 <select id="taskDetail"></select>
 
 <label>Описание</label>
@@ -158,11 +211,11 @@ margin-bottom:10px;
 
 <hr>
 
-<label>Добавить задачу</label>
+<label>Новая задача</label>
 <input id="newTaskOption">
 <button onclick="addOption('task')">Добавить</button>
 
-<label>Добавить деталь</label>
+<label>Новая деталь</label>
 <input id="newDetailOption">
 <button onclick="addOption('detail')">Добавить</button>
 
@@ -174,12 +227,30 @@ margin-bottom:10px;
 
 const PASSWORD="7575"
 
-function login(){
+let pass=""
 
-if(password.value===PASSWORD){
+function pressKey(n){
 
-login.style.display="none"
-app.classList.remove("hidden")
+pass+=n
+
+passwordInput.value="*".repeat(pass.length)
+
+}
+
+function deleteKey(){
+
+pass=pass.slice(0,-1)
+
+passwordInput.value="*".repeat(pass.length)
+
+}
+
+function submitPassword(){
+
+if(pass===PASSWORD){
+
+loginScreen.style.display="none"
+app.style.display="block"
 
 init()
 
@@ -187,14 +258,22 @@ init()
 
 alert("Неверный пароль")
 
-}
+pass=""
+passwordInput.value=""
 
 }
 
-const supabaseUrl="https://xvyhstvhgmdbstfoglkh.supabase.co"
-const supabaseKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eWhzdHZoZ21kYnN0Zm9nbGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MjUzODYsImV4cCI6MjA4OTIwMTM4Nn0.bha5NRonWnsB6Q4bbYi0s1iBPY8MrvfrXi29Rf-9a28"
+}
 
-const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey)
+/* SUPABASE */
+
+const SUPABASE_URL="https://xvyhstvhgmdbstfoglkh.supabase.co"
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eWhzdHZoZ21kYnN0Zm9nbGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MjUzODYsImV4cCI6MjA4OTIwMTM4Nn0.bha5NRonWnsB6Q4bbYi0s1iBPY8MrvfrXi29Rf-9a28"
+
+const supabaseClient=supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+)
 
 let settings={}
 let taskOptions=[]
@@ -202,9 +281,9 @@ let detailOptions=[]
 
 async function init(){
 
-loadSettings()
-loadOptions()
-loadTasks()
+await loadSettings()
+await loadOptions()
+await loadTasks()
 
 }
 
@@ -213,14 +292,15 @@ async function loadSettings(){
 let {data}=await supabaseClient
 .from("settings")
 .select("*")
+.eq("id",1)
 .single()
 
-settings=data||{}
+if(data){
 
-if(settings){
+settings=data
 
-botToken.value=settings.bot_token||""
-chatId.value=settings.chat_id||""
+botToken.value=data.bot_token||""
+chatId.value=data.chat_id||""
 
 }
 
@@ -287,7 +367,9 @@ taskDetail.appendChild(o)
 
 async function addOption(type){
 
-let value=type==="task"?newTaskOption.value:newDetailOption.value
+let value=type==="task"
+?newTaskOption.value
+:newDetailOption.value
 
 await supabaseClient
 .from("options")
@@ -312,11 +394,11 @@ renderTasks(data)
 
 }
 
-function renderTasks(tasksList){
+function renderTasks(list){
 
 tasks.innerHTML=""
 
-tasksList.forEach(t=>{
+list.forEach(t=>{
 
 let div=document.createElement("div")
 
@@ -363,11 +445,9 @@ loadTasks()
 
 }
 
-function formatDate(dateStr){
+function formatDate(d){
 
-let d=new Date(dateStr)
-
-return d.toLocaleString()
+return new Date(d).toLocaleString()
 
 }
 
