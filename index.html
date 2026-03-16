@@ -12,41 +12,45 @@
 <style>
 
 body{
-font-family:Arial;
+font-family:-apple-system,BlinkMacSystemFont;
+background:#f2f2f7;
 margin:0;
-background:#f3f3f3;
 }
 
 /* LOGIN */
 
 #loginScreen{
 text-align:center;
-margin-top:60px;
+margin-top:80px;
 }
 
 #passwordInput{
-font-size:28px;
-text-align:center;
+font-size:30px;
 width:200px;
+text-align:center;
 padding:10px;
 margin:20px auto;
 display:block;
+border-radius:12px;
+border:none;
+background:white;
 }
 
 .keyboard{
 display:grid;
 grid-template-columns:repeat(3,80px);
-gap:10px;
+gap:15px;
 justify-content:center;
 }
 
 .keyboard button{
-font-size:22px;
-padding:15px;
+height:70px;
+width:70px;
+border-radius:50%;
 border:none;
-border-radius:10px;
-background:#2196F3;
-color:white;
+font-size:22px;
+background:white;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 
 /* APP */
@@ -60,15 +64,28 @@ padding:15px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-margin-bottom:15px;
+margin-bottom:20px;
 }
+
+.roundBtn{
+height:45px;
+width:45px;
+border-radius:50%;
+border:none;
+font-size:18px;
+background:white;
+box-shadow:0 3px 8px rgba(0,0,0,0.1);
+margin-left:5px;
+}
+
+/* CARDS */
 
 .card{
 background:white;
+border-radius:16px;
 padding:15px;
-border-radius:10px;
-margin-bottom:10px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+margin-bottom:12px;
+box-shadow:0 6px 15px rgba(0,0,0,0.08);
 }
 
 /* MODAL */
@@ -79,7 +96,7 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.4);
+background:rgba(0,0,0,0.3);
 display:none;
 align-items:center;
 justify-content:center;
@@ -87,31 +104,43 @@ justify-content:center;
 
 .modal-content{
 background:white;
+border-radius:20px;
 padding:20px;
-border-radius:10px;
 width:90%;
-max-width:400px;
+max-width:420px;
+max-height:85vh;
+overflow:auto;
 position:relative;
 }
 
 .close{
 position:absolute;
-right:10px;
 top:10px;
-cursor:pointer;
+right:15px;
 font-size:20px;
+cursor:pointer;
 }
 
 input,select,textarea{
 width:100%;
-padding:8px;
+padding:10px;
 margin-bottom:10px;
+border-radius:10px;
+border:1px solid #ddd;
 }
 
-button{
-padding:10px;
+.listItem{
+display:flex;
+justify-content:space-between;
+padding:8px 0;
+border-bottom:1px solid #eee;
+}
+
+.smallBtn{
 border:none;
-border-radius:6px;
+background:none;
+font-size:16px;
+cursor:pointer;
 }
 
 </style>
@@ -150,6 +179,7 @@ border-radius:6px;
 
 </div>
 
+
 <!-- APP -->
 
 <div id="app">
@@ -160,9 +190,9 @@ border-radius:6px;
 
 <div>
 
-<button onclick="openTask()">➕</button>
-<button onclick="sendTasks()">📤</button>
-<button onclick="openSettings()">⚙</button>
+<button class="roundBtn" onclick="openTask()">＋</button>
+<button class="roundBtn" onclick="sendTasks()">📤</button>
+<button class="roundBtn" onclick="openSettings()">⚙</button>
 
 </div>
 
@@ -172,6 +202,7 @@ border-radius:6px;
 
 </div>
 
+
 <!-- TASK MODAL -->
 
 <div class="modal" id="taskModal">
@@ -180,18 +211,14 @@ border-radius:6px;
 
 <span class="close" onclick="closeTask()">✖</span>
 
-<h3>Добавить задачу</h3>
+<h3>Задача</h3>
 
-<label>Задача</label>
 <select id="taskName"></select>
 
-<label>Дополнение</label>
 <select id="taskDetail"></select>
 
-<label>Описание</label>
-<textarea id="taskDescription"></textarea>
+<textarea id="taskDescription" placeholder="Описание"></textarea>
 
-<label>Срок</label>
 <input type="datetime-local" id="taskDate">
 
 <button onclick="saveTask()">Сохранить</button>
@@ -199,6 +226,7 @@ border-radius:6px;
 </div>
 
 </div>
+
 
 <!-- SETTINGS -->
 
@@ -210,81 +238,74 @@ border-radius:6px;
 
 <h3>Настройки</h3>
 
-<label>BOT TOKEN</label>
-<input id="botToken">
-
-<label>CHAT ID</label>
-<input id="chatId">
+<input id="botToken" placeholder="BOT TOKEN">
+<input id="chatId" placeholder="CHAT ID">
 
 <button onclick="saveSettings()">Сохранить</button>
 
-<hr>
+<h3>Задачи</h3>
 
-<h3>Добавить варианты</h3>
-
-<label>Новая задача</label>
-<input id="newTaskOption">
+<input id="newTaskOption" placeholder="Добавить задачу">
 <button onclick="addOption('task')">Добавить</button>
 
-<label>Новое дополнение</label>
-<input id="newDetailOption">
+<div id="taskOptionsList"></div>
+
+<h3>Дополнения</h3>
+
+<input id="newDetailOption" placeholder="Добавить дополнение">
 <button onclick="addOption('detail')">Добавить</button>
 
+<div id="detailOptionsList"></div>
+
 </div>
 
 </div>
+
 
 <script>
-
-/* LOGIN */
 
 const PASSWORD="7575"
 let pass=""
 
 function pressKey(n){
-
 pass+=n
-document.getElementById("passwordInput").value="*".repeat(pass.length)
-
+passwordInput.value="*".repeat(pass.length)
 }
 
 function deleteKey(){
-
 pass=pass.slice(0,-1)
-document.getElementById("passwordInput").value="*".repeat(pass.length)
-
+passwordInput.value="*".repeat(pass.length)
 }
 
 function submitPassword(){
 
 if(pass===PASSWORD){
 
-document.getElementById("loginScreen").style.display="none"
-document.getElementById("app").style.display="block"
+loginScreen.style.display="none"
+app.style.display="block"
 
 init()
 
 }else{
 
 alert("Неверный пароль")
+
 pass=""
-document.getElementById("passwordInput").value=""
+passwordInput.value=""
 
 }
 
 }
-
-/* SUPABASE */
 
 const SUPABASE_URL="https://xvyhstvhgmdbstfoglkh.supabase.co"
 const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2eWhzdHZoZ21kYnN0Zm9nbGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MjUzODYsImV4cCI6MjA4OTIwMTM4Nn0.bha5NRonWnsB6Q4bbYi0s1iBPY8MrvfrXi29Rf-9a28"
 
-const supabaseClient = supabase.createClient(
+const supabaseClient=supabase.createClient(
 SUPABASE_URL,
 SUPABASE_KEY
 )
 
-/* INIT */
+let editTaskId=null
 
 async function init(){
 
@@ -293,8 +314,6 @@ loadOptions()
 loadTasks()
 
 }
-
-/* SETTINGS */
 
 async function loadSettings(){
 
@@ -306,8 +325,8 @@ let {data}=await supabaseClient
 
 if(data){
 
-document.getElementById("botToken").value=data.bot_token||""
-document.getElementById("chatId").value=data.chat_id||""
+botToken.value=data.bot_token||""
+chatId.value=data.chat_id||""
 
 }
 
@@ -315,22 +334,17 @@ document.getElementById("chatId").value=data.chat_id||""
 
 async function saveSettings(){
 
-const token=document.getElementById("botToken").value
-const chat=document.getElementById("chatId").value
-
 await supabaseClient
 .from("settings")
 .update({
-bot_token:token,
-chat_id:chat
+bot_token:botToken.value,
+chat_id:chatId.value
 })
 .eq("id",1)
 
-alert("Настройки сохранены")
+alert("Сохранено")
 
 }
-
-/* OPTIONS */
 
 async function loadOptions(){
 
@@ -338,21 +352,43 @@ let {data}=await supabaseClient
 .from("options")
 .select("*")
 
-let taskSelect=document.getElementById("taskName")
-let detailSelect=document.getElementById("taskDetail")
+taskName.innerHTML=""
+taskDetail.innerHTML=""
 
-taskSelect.innerHTML=""
-detailSelect.innerHTML=""
+taskOptionsList.innerHTML=""
+detailOptionsList.innerHTML=""
 
 data.forEach(o=>{
 
 let option=document.createElement("option")
-option.value=o.value
 option.textContent=o.value
+option.value=o.value
 
-if(o.type==="task") taskSelect.appendChild(option)
+if(o.type==="task"){
+taskName.appendChild(option)
 
-if(o.type==="detail") detailSelect.appendChild(option)
+taskOptionsList.innerHTML+=`
+<div class="listItem">
+${o.value}
+<div>
+<button class="smallBtn" onclick="editOption('${o.id}','${o.value}')">✏️</button>
+<button class="smallBtn" onclick="deleteOption('${o.id}')">🗑</button>
+</div>
+</div>`
+}
+
+if(o.type==="detail"){
+taskDetail.appendChild(option)
+
+detailOptionsList.innerHTML+=`
+<div class="listItem">
+${o.value}
+<div>
+<button class="smallBtn" onclick="editOption('${o.id}','${o.value}')">✏️</button>
+<button class="smallBtn" onclick="deleteOption('${o.id}')">🗑</button>
+</div>
+</div>`
+}
 
 })
 
@@ -361,8 +397,8 @@ if(o.type==="detail") detailSelect.appendChild(option)
 async function addOption(type){
 
 let value = type==="task"
-?document.getElementById("newTaskOption").value
-:document.getElementById("newDetailOption").value
+?newTaskOption.value
+:newDetailOption.value
 
 await supabaseClient
 .from("options")
@@ -371,11 +407,38 @@ type:type,
 value:value
 })
 
+if(type==="task") newTaskOption.value=""
+else newDetailOption.value=""
+
 loadOptions()
 
 }
 
-/* TASKS */
+async function editOption(id,value){
+
+let newValue=prompt("Редактировать",value)
+
+if(!newValue) return
+
+await supabaseClient
+.from("options")
+.update({value:newValue})
+.eq("id",id)
+
+loadOptions()
+
+}
+
+async function deleteOption(id){
+
+await supabaseClient
+.from("options")
+.delete()
+.eq("id",id)
+
+loadOptions()
+
+}
 
 async function loadTasks(){
 
@@ -383,69 +446,126 @@ let {data}=await supabaseClient
 .from("tasks")
 .select("*")
 
-let container=document.getElementById("tasks")
-container.innerHTML=""
+tasks.innerHTML=""
 
 data.forEach(t=>{
 
-let div=document.createElement("div")
-div.className="card"
+tasks.innerHTML+=`
+<div class="card">
 
-let text=`<b>${t.name} ${t.detail||""}</b>`
+<b>${t.name} ${t.detail||""}</b>
 
-if(t.description){
+${t.description?`<p>${t.description}</p>`:""}
 
-text+=`<p>${t.description}</p>`
+${t.date?`<p>⏰ ${new Date(t.date).toLocaleString()}</p>`:""}
 
-}
+<div>
 
-if(t.date){
+<button onclick="editTask('${t.id}','${t.name}','${t.detail}','${t.description}','${t.date}')">✏️</button>
 
-text+=`<p>⏰ ${new Date(t.date).toLocaleString()}</p>`
+<button onclick="deleteTask('${t.id}')">🗑</button>
 
-}
+</div>
 
-div.innerHTML=text
-
-container.appendChild(div)
+</div>
+`
 
 })
+
+}
+
+function openTask(){
+
+editTaskId=null
+taskModal.style.display="flex"
+
+}
+
+function closeTask(){
+
+taskModal.style.display="none"
+
+}
+
+function openSettings(){
+
+settingsModal.style.display="flex"
+
+}
+
+function closeSettings(){
+
+settingsModal.style.display="none"
 
 }
 
 async function saveTask(){
 
-const name=document.getElementById("taskName").value
-const detail=document.getElementById("taskDetail").value
-const desc=document.getElementById("taskDescription").value
-const date=document.getElementById("taskDate").value
+let name=taskName.value
+let detail=taskDetail.value
+let desc=taskDescription.value
+let date=taskDate.value
+
+if(editTaskId){
+
+await supabaseClient
+.from("tasks")
+.update({
+name:name,
+detail:detail,
+description:desc,
+date:date||null
+})
+.eq("id",editTaskId)
+
+}else{
 
 await supabaseClient
 .from("tasks")
 .insert({
-
 name:name,
 detail:detail,
 description:desc,
-date:date
-
+date:date||null
 })
 
+}
+
 closeTask()
+
 loadTasks()
 
 }
 
-/* TELEGRAM */
+function editTask(id,name,detail,desc,date){
+
+editTaskId=id
+
+taskName.value=name
+taskDetail.value=detail
+taskDescription.value=desc||""
+taskDate.value=date||""
+
+openTask()
+
+}
+
+async function deleteTask(id){
+
+await supabaseClient
+.from("tasks")
+.delete()
+.eq("id",id)
+
+loadTasks()
+
+}
 
 async function sendTasks(){
 
 let {data}=await supabaseClient
 .from("tasks")
 .select("*")
-
-const token=document.getElementById("botToken").value
-const chat=document.getElementById("chatId").value
 
 for(let task of data){
 
@@ -459,11 +579,11 @@ text+=`\n\n${task.description}`
 
 if(task.date){
 
-text+=`\n\n⏰ Срок: ${new Date(task.date).toLocaleString()}`
+text+=`\n\n⏰ ${new Date(task.date).toLocaleString()}`
 
 }
 
-await fetch(`https://api.telegram.org/bot${token}/sendMessage`,{
+await fetch(`https://api.telegram.org/bot${botToken.value}/sendMessage`,{
 
 method:"POST",
 
@@ -472,10 +592,8 @@ headers:{
 },
 
 body:JSON.stringify({
-
-chat_id:chat,
+chat_id:chatId.value,
 text:text
-
 })
 
 })
@@ -483,32 +601,6 @@ text:text
 }
 
 alert("Задачи отправлены")
-
-}
-
-/* MODALS */
-
-function openTask(){
-
-document.getElementById("taskModal").style.display="flex"
-
-}
-
-function closeTask(){
-
-document.getElementById("taskModal").style.display="none"
-
-}
-
-function openSettings(){
-
-document.getElementById("settingsModal").style.display="flex"
-
-}
-
-function closeSettings(){
-
-document.getElementById("settingsModal").style.display="none"
 
 }
 
