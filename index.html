@@ -14,7 +14,7 @@
 body{
 font-family:Arial;
 margin:0;
-background:#f2f2f2;
+background:#f3f3f3;
 }
 
 /* LOGIN */
@@ -25,7 +25,7 @@ margin-top:60px;
 }
 
 #passwordInput{
-font-size:26px;
+font-size:28px;
 text-align:center;
 width:200px;
 padding:10px;
@@ -63,10 +63,6 @@ align-items:center;
 margin-bottom:15px;
 }
 
-.header button{
-margin-left:5px;
-}
-
 .card{
 background:white;
 padding:15px;
@@ -83,7 +79,7 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.5);
+background:rgba(0,0,0,0.4);
 display:none;
 align-items:center;
 justify-content:center;
@@ -103,7 +99,7 @@ position:absolute;
 right:10px;
 top:10px;
 cursor:pointer;
-font-size:18px;
+font-size:20px;
 }
 
 input,select,textarea{
@@ -154,7 +150,6 @@ border-radius:6px;
 
 </div>
 
-
 <!-- APP -->
 
 <div id="app">
@@ -176,7 +171,6 @@ border-radius:6px;
 <div id="tasks"></div>
 
 </div>
-
 
 <!-- TASK MODAL -->
 
@@ -206,7 +200,6 @@ border-radius:6px;
 
 </div>
 
-
 <!-- SETTINGS -->
 
 <div class="modal" id="settingsModal">
@@ -225,23 +218,32 @@ border-radius:6px;
 
 <button onclick="saveSettings()">Сохранить</button>
 
-</div>
+<hr>
+
+<h3>Добавить варианты</h3>
+
+<label>Новая задача</label>
+<input id="newTaskOption">
+<button onclick="addOption('task')">Добавить</button>
+
+<label>Новое дополнение</label>
+<input id="newDetailOption">
+<button onclick="addOption('detail')">Добавить</button>
 
 </div>
 
+</div>
 
 <script>
 
 /* LOGIN */
 
 const PASSWORD="7575"
-
 let pass=""
 
 function pressKey(n){
 
 pass+=n
-
 document.getElementById("passwordInput").value="*".repeat(pass.length)
 
 }
@@ -249,7 +251,6 @@ document.getElementById("passwordInput").value="*".repeat(pass.length)
 function deleteKey(){
 
 pass=pass.slice(0,-1)
-
 document.getElementById("passwordInput").value="*".repeat(pass.length)
 
 }
@@ -266,14 +267,12 @@ init()
 }else{
 
 alert("Неверный пароль")
-
 pass=""
 document.getElementById("passwordInput").value=""
 
 }
 
 }
-
 
 /* SUPABASE */
 
@@ -285,28 +284,25 @@ SUPABASE_URL,
 SUPABASE_KEY
 )
 
-
 /* INIT */
 
 async function init(){
 
 loadSettings()
+loadOptions()
 loadTasks()
 
 }
-
 
 /* SETTINGS */
 
 async function loadSettings(){
 
-let {data,error} = await supabaseClient
+let {data}=await supabaseClient
 .from("settings")
 .select("*")
 .eq("id",1)
 .single()
-
-if(error) console.log(error)
 
 if(data){
 
@@ -322,7 +318,7 @@ async function saveSettings(){
 const token=document.getElementById("botToken").value
 const chat=document.getElementById("chatId").value
 
-let {error} = await supabaseClient
+await supabaseClient
 .from("settings")
 .update({
 bot_token:token,
@@ -330,49 +326,69 @@ chat_id:chat
 })
 .eq("id",1)
 
-if(error){
-
-console.log(error)
-alert("Ошибка сохранения")
-
-}else{
-
-alert("Сохранено")
+alert("Настройки сохранены")
 
 }
 
+/* OPTIONS */
+
+async function loadOptions(){
+
+let {data}=await supabaseClient
+.from("options")
+.select("*")
+
+let taskSelect=document.getElementById("taskName")
+let detailSelect=document.getElementById("taskDetail")
+
+taskSelect.innerHTML=""
+detailSelect.innerHTML=""
+
+data.forEach(o=>{
+
+let option=document.createElement("option")
+option.value=o.value
+option.textContent=o.value
+
+if(o.type==="task") taskSelect.appendChild(option)
+
+if(o.type==="detail") detailSelect.appendChild(option)
+
+})
+
 }
 
+async function addOption(type){
+
+let value = type==="task"
+?document.getElementById("newTaskOption").value
+:document.getElementById("newDetailOption").value
+
+await supabaseClient
+.from("options")
+.insert({
+type:type,
+value:value
+})
+
+loadOptions()
+
+}
 
 /* TASKS */
 
 async function loadTasks(){
 
-let {data,error}=await supabaseClient
+let {data}=await supabaseClient
 .from("tasks")
 .select("*")
 
-if(error){
-
-console.log(error)
-return
-
-}
-
-renderTasks(data)
-
-}
-
-function renderTasks(list){
-
-const container=document.getElementById("tasks")
-
+let container=document.getElementById("tasks")
 container.innerHTML=""
 
-list.forEach(t=>{
+data.forEach(t=>{
 
 let div=document.createElement("div")
-
 div.className="card"
 
 let text=`<b>${t.name} ${t.detail||""}</b>`
@@ -397,7 +413,6 @@ container.appendChild(div)
 
 }
 
-
 async function saveTask(){
 
 const name=document.getElementById("taskName").value
@@ -405,7 +420,7 @@ const detail=document.getElementById("taskDetail").value
 const desc=document.getElementById("taskDescription").value
 const date=document.getElementById("taskDate").value
 
-let {error}=await supabaseClient
+await supabaseClient
 .from("tasks")
 .insert({
 
@@ -416,20 +431,10 @@ date:date
 
 })
 
-if(error){
-
-console.log(error)
-alert("Ошибка добавления")
-
-}else{
-
 closeTask()
 loadTasks()
 
 }
-
-}
-
 
 /* TELEGRAM */
 
@@ -477,10 +482,9 @@ text:text
 
 }
 
-alert("Отправлено")
+alert("Задачи отправлены")
 
 }
-
 
 /* MODALS */
 
