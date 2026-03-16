@@ -3,9 +3,11 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>ПИЗДА</title>
+<title>Task CRM</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
 <style>
 
@@ -16,17 +18,19 @@ margin:0;
 padding:20px;
 }
 
+.hidden{
+display:none;
+}
+
 .header{
 display:flex;
 justify-content:space-between;
-flex-wrap:wrap;
-gap:10px;
 margin-bottom:20px;
 }
 
 button{
-border:none;
 padding:10px 14px;
+border:none;
 border-radius:6px;
 cursor:pointer;
 }
@@ -35,25 +39,13 @@ cursor:pointer;
 .send{background:#2196F3;color:white}
 .settings{background:#555;color:white}
 
-.task-card{
+.card{
 background:white;
 padding:15px;
-margin-bottom:10px;
 border-radius:10px;
+margin-bottom:10px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
-
-.task-title{
-font-weight:bold;
-font-size:16px;
-}
-
-.task-actions{
-margin-top:10px;
-}
-
-.edit{background:#FFC107}
-.delete{background:#f44336;color:white}
 
 .modal{
 position:fixed;
@@ -75,34 +67,11 @@ width:90%;
 max-width:400px;
 }
 
-label{
-display:block;
-margin-top:10px;
-font-weight:bold;
-}
-
 input,select,textarea{
 width:100%;
 padding:8px;
 margin-top:5px;
-border:1px solid #ccc;
-border-radius:6px;
-}
-
-textarea{
-resize:vertical;
-}
-
-.option-item{
-display:flex;
-justify-content:space-between;
-margin-top:5px;
-}
-
-.option-item button{
-background:#f44336;
-color:white;
-padding:3px 8px;
+margin-bottom:10px;
 }
 
 </style>
@@ -111,381 +80,347 @@ padding:3px 8px;
 
 <body>
 
+<!-- LOGIN -->
+
+<div id="login">
+
+<h2>Введите пароль</h2>
+
+<input type="password" id="password">
+
+<button onclick="login()">Войти</button>
+
+</div>
+
+<!-- APP -->
+
+<div id="app" class="hidden">
+
 <div class="header">
 
-<h5>ПИЗДА</h5>
+<h2>Task CRM</h2>
 
 <div>
 
-<button class="add" onclick="openModal()">+ Задача</button>
+<button class="add" onclick="openTask()">+ задача</button>
 <button class="send" onclick="sendTasks()">Назначить</button>
-<button class="settings" onclick="openSettings()">⚙️</button>
+<button class="settings" onclick="openSettings()">⚙</button>
 
 </div>
 
 </div>
 
-<div id="taskList"></div>
+<div id="tasks"></div>
 
-<!-- МОДАЛКА ЗАДАЧ -->
+</div>
+
+<!-- TASK MODAL -->
 
 <div class="modal" id="taskModal">
+
 <div class="modal-content">
 
-<h3 id="modalTitle">Новая задача</h3>
+<h3>Задача</h3>
 
-<label>Название задачи</label>
+<label>Название</label>
 <select id="taskName"></select>
 
 <label>Дополнительный текст</label>
 <select id="taskDetail"></select>
 
-<label>Описание задачи</label>
+<label>Описание</label>
 <textarea id="taskDescription"></textarea>
 
-<label>Ожидаемый срок выполнения</label>
+<label>Срок</label>
 <input type="datetime-local" id="taskDate">
 
-<br><br>
-
 <button onclick="saveTask()">Сохранить</button>
-<button onclick="closeModal()">Отмена</button>
 
 </div>
+
 </div>
 
-<!-- ПАНЕЛЬ НАСТРОЕК -->
+<!-- SETTINGS -->
 
 <div class="modal" id="settingsModal">
+
 <div class="modal-content">
 
-<h3>⚙️ Настройки</h3>
+<h3>Настройки</h3>
 
-<label>Добавить вариант задачи</label>
+<label>BOT TOKEN</label>
+<input id="botToken">
 
-<input id="newTaskOption">
-<button onclick="addTaskOption()">Добавить</button>
+<label>CHAT ID</label>
+<input id="chatId">
 
-<div id="taskOptionsList"></div>
+<button onclick="saveSettings()">Сохранить</button>
 
 <hr>
 
-<label>Добавить вариант второго поля</label>
+<label>Добавить задачу</label>
+<input id="newTaskOption">
+<button onclick="addOption('task')">Добавить</button>
 
+<label>Добавить деталь</label>
 <input id="newDetailOption">
-<button onclick="addDetailOption()">Добавить</button>
-
-<div id="detailOptionsList"></div>
-
-<br>
-
-<button onclick="closeSettings()">Закрыть</button>
+<button onclick="addOption('detail')">Добавить</button>
 
 </div>
+
 </div>
 
 <script>
 
-const BOT_TOKEN="8720661501:AAGqyVGWsJQaQ1UFyEgdAI8BZ3TibtM04J4";
-const CHAT_ID="-1003863437691";
+const PASSWORD="7575"
 
-let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
-let taskOptions=JSON.parse(localStorage.getItem("taskOptions"))||[];
-let detailOptions=JSON.parse(localStorage.getItem("detailOptions"))||[];
+function login(){
 
-let editIndex=null;
+if(password.value===PASSWORD){
 
-render();
-renderOptions();
+login.style.display="none"
+app.classList.remove("hidden")
 
-function openModal(index=null){
-
-taskModal.style.display="flex";
-
-if(index!==null){
-
-editIndex=index;
-
-let t=tasks[index];
-
-taskName.value=t.name;
-taskDetail.value=t.detail;
-taskDescription.value=t.description || "";
-taskDate.value=t.date;
+init()
 
 }else{
 
-editIndex=null;
-
-taskDescription.value="";
-taskDate.value="";
+alert("Неверный пароль")
 
 }
 
 }
 
-function closeModal(){
+const supabaseUrl="YOUR_SUPABASE_URL"
+const supabaseKey="YOUR_SUPABASE_ANON_KEY"
 
-taskModal.style.display="none";
+const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey)
 
-}
+let settings={}
+let taskOptions=[]
+let detailOptions=[]
 
-function saveTask(){
+async function init(){
 
-let task={
-name:taskName.value,
-detail:taskDetail.value,
-description:taskDescription.value,
-date:taskDate.value
-};
-
-if(!task.name) return;
-
-if(editIndex!==null){
-
-tasks[editIndex]=task;
-
-}else{
-
-tasks.push(task);
+loadSettings()
+loadOptions()
+loadTasks()
 
 }
 
-localStorage.setItem("tasks",JSON.stringify(tasks));
+async function loadSettings(){
 
-render();
+let {data}=await supabaseClient
+.from("settings")
+.select("*")
+.single()
 
-closeModal();
+settings=data||{}
 
-}
+if(settings){
 
-function deleteTask(i){
-
-if(confirm("Удалить задачу?")){
-
-tasks.splice(i,1);
-
-localStorage.setItem("tasks",JSON.stringify(tasks));
-
-render();
+botToken.value=settings.bot_token||""
+chatId.value=settings.chat_id||""
 
 }
 
 }
 
-function render(){
+async function saveSettings(){
 
-taskList.innerHTML="";
+await supabaseClient
+.from("settings")
+upsert({
 
-tasks.forEach((t,i)=>{
+id:1,
+bot_token:botToken.value,
+chat_id:chatId.value
 
-let div=document.createElement("div");
+})
 
-div.className="task-card";
+alert("сохранено")
 
-div.innerHTML=`
+}
 
-<div class="task-title">${t.name} ${t.detail||""}</div>
+async function loadOptions(){
 
-${t.description ? `<div>${t.description}</div>` : ""}
+let {data}=await supabaseClient
+.from("options")
+.select("*")
 
-${t.date ? `<div>⏰ ${formatDate(t.date)}</div>` : ""}
+taskOptions=[]
+detailOptions=[]
 
-<div class="task-actions">
+data.forEach(o=>{
 
-<button class="edit" onclick="openModal(${i})">✏️</button>
-<button class="delete" onclick="deleteTask(${i})">🗑</button>
+if(o.type==="task") taskOptions.push(o.value)
+if(o.type==="detail") detailOptions.push(o.value)
 
-</div>
+})
 
-`;
-
-taskList.appendChild(div);
-
-});
+renderOptions()
 
 }
 
 function renderOptions(){
 
-taskName.innerHTML="";
-taskDetail.innerHTML="";
+taskName.innerHTML=""
+taskDetail.innerHTML=""
 
-taskOptions.forEach(o=>{
+taskOptions.forEach(v=>{
 
-let option=document.createElement("option");
-option.value=o;
-option.textContent=o;
+let o=document.createElement("option")
+o.textContent=v
+taskName.appendChild(o)
 
-taskName.appendChild(option);
+})
 
-});
+detailOptions.forEach(v=>{
 
-detailOptions.forEach(o=>{
+let o=document.createElement("option")
+o.textContent=v
+taskDetail.appendChild(o)
 
-let option=document.createElement("option");
-option.value=o;
-option.textContent=o;
-
-taskDetail.appendChild(option);
-
-});
-
-renderSettingsLists();
+})
 
 }
 
-function openSettings(){
+async function addOption(type){
 
-settingsModal.style.display="flex";
+let value=type==="task"?newTaskOption.value:newDetailOption.value
 
-}
+await supabaseClient
+.from("options")
+.insert({
 
-function closeSettings(){
+type:type,
+value:value
 
-settingsModal.style.display="none";
+})
 
-}
-
-function addTaskOption(){
-
-let v=newTaskOption.value;
-
-if(!v) return;
-
-taskOptions.push(v);
-
-localStorage.setItem("taskOptions",JSON.stringify(taskOptions));
-
-newTaskOption.value="";
-
-renderOptions();
+loadOptions()
 
 }
 
-function addDetailOption(){
+async function loadTasks(){
 
-let v=newDetailOption.value;
+let {data}=await supabaseClient
+.from("tasks")
+.select("*")
 
-if(!v) return;
-
-detailOptions.push(v);
-
-localStorage.setItem("detailOptions",JSON.stringify(detailOptions));
-
-newDetailOption.value="";
-
-renderOptions();
+renderTasks(data)
 
 }
 
-function renderSettingsLists(){
+function renderTasks(tasksList){
 
-taskOptionsList.innerHTML="";
+tasks.innerHTML=""
 
-taskOptions.forEach((o,i)=>{
+tasksList.forEach(t=>{
 
-let div=document.createElement("div");
+let div=document.createElement("div")
 
-div.className="option-item";
+div.className="card"
 
 div.innerHTML=`
-<span>${o}</span>
-<button onclick="removeTaskOption(${i})">X</button>
-`;
 
-taskOptionsList.appendChild(div);
+<b>${t.name} ${t.detail||""}</b>
 
-});
+${t.description?`<p>${t.description}</p>`:""}
 
-detailOptionsList.innerHTML="";
+${t.date?`<p>⏰ ${formatDate(t.date)}</p>`:""}
 
-detailOptions.forEach((o,i)=>{
+`
 
-let div=document.createElement("div");
+tasks.appendChild(div)
 
-div.className="option-item";
-
-div.innerHTML=`
-<span>${o}</span>
-<button onclick="removeDetailOption(${i})">X</button>
-`;
-
-detailOptionsList.appendChild(div);
-
-});
+})
 
 }
 
-function removeTaskOption(i){
+function openTask(){
 
-taskOptions.splice(i,1);
-
-localStorage.setItem("taskOptions",JSON.stringify(taskOptions));
-
-renderOptions();
+taskModal.style.display="flex"
 
 }
 
-function removeDetailOption(i){
+async function saveTask(){
 
-detailOptions.splice(i,1);
+await supabaseClient
+.from("tasks")
+.insert({
 
-localStorage.setItem("detailOptions",JSON.stringify(detailOptions));
+name:taskName.value,
+detail:taskDetail.value,
+description:taskDescription.value,
+date:taskDate.value
 
-renderOptions();
+})
+
+taskModal.style.display="none"
+
+loadTasks()
 
 }
 
 function formatDate(dateStr){
 
-let d=new Date(dateStr);
+let d=new Date(dateStr)
 
-let day=String(d.getDate()).padStart(2,'0');
-let month=String(d.getMonth()+1).padStart(2,'0');
-let year=d.getFullYear();
-
-let hours=String(d.getHours()).padStart(2,'0');
-let minutes=String(d.getMinutes()).padStart(2,'0');
-
-return `${day}.${month}.${year} ${hours}:${minutes}`;
+return d.toLocaleString()
 
 }
 
 async function sendTasks(){
 
-for(let task of tasks){
+let {data}=await supabaseClient
+.from("tasks")
+.select("*")
 
-let text=`📌 ${task.name} ${task.detail||""}`;
+for(let task of data){
+
+let text=`📌 ${task.name} ${task.detail||""}`
 
 if(task.description){
-text+=`\n\n${task.description}`;
+
+text+=`\n\n${task.description}`
+
 }
 
 if(task.date){
-text+=`\n\n⏰ Срок: ${formatDate(task.date)}`;
+
+text+=`\n\n⏰ Срок: ${formatDate(task.date)}`
+
 }
 
-await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+await fetch(`https://api.telegram.org/bot${settings.bot_token}/sendMessage`,{
 
 method:"POST",
 
 headers:{
+
 "Content-Type":"application/json"
+
 },
 
 body:JSON.stringify({
 
-chat_id:CHAT_ID,
+chat_id:settings.chat_id,
 text:text
 
 })
 
-});
+})
 
 }
 
-alert("Задачи отправлены");
+alert("Задачи отправлены")
+
+}
+
+function openSettings(){
+
+settingsModal.style.display="flex"
 
 }
 
